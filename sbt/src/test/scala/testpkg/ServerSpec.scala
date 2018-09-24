@@ -36,11 +36,51 @@ class ServerSpec extends AsyncFreeSpec with Matchers {
         s contains """"id":3"""
       })
     }
+
+    "report task failures in case of exceptions" in withTestServer("events") { p =>
+      p.writeLine(
+        """{ "jsonrpc": "2.0", "id": 11, "method": "sbt/exec", "params": { "commandLine": "hello" } }"""
+      )
+
+      assert(p.waitForString(10) { s =>
+        (s contains """"id":11""") && (s contains """""error":""")
+      })
+    }
   }
+
+  // "failingServer" - {
+  //   "report task failures in case of exceptions" in {
+  //     val p = Promise[Boolean]
+  //     val futureServer = Future {
+  //       val testServer =
+  //         IO.withTemporaryDirectory { temp =>
+  //           IO.copyDirectory(TestServer.serverTestBase / "events", temp / "events")
+  //           TestServer(temp / "events")
+  //         }
+
+  //       testServer.writeLine(
+  //         """{ "jsonrpc": "2.0", "id": 11, "method": "sbt/exec", "params": { "commandLine": "hello" } }"""
+  //       )
+  //       testServer.waitForString(10)(s => {
+  //         println("contains funziona? " + s)
+  //         val res =
+  //           (s contains """"id":11""") && (s contains """"error":""")
+
+  //         if (res) p.success(true)
+  //         println(res)
+  //         res
+  //       })
+  //     }
+
+  //     val firstCompleted = (Future firstCompletedOf Seq(p.future, futureServer))
+
+  //     firstCompleted.map(x => assert(x == true))
+  //   }
+  // }
 }
 
 object TestServer {
-  private val serverTestBase: File = new File(".").getAbsoluteFile / "sbt" / "src" / "server-test"
+  val serverTestBase: File = new File(".").getAbsoluteFile / "sbt" / "src" / "server-test"
 
   def withTestServer(testBuild: String)(f: TestServer => Future[Assertion]): Future[Assertion] = {
     IO.withTemporaryDirectory { temp =>
@@ -50,11 +90,13 @@ object TestServer {
   }
 
   def withTestServer(baseDirectory: File)(f: TestServer => Future[Assertion]): Future[Assertion] = {
-    val testServer = TestServer(baseDirectory)
+    var testServer: TestServer = null
     try {
+      testServer = TestServer(baseDirectory)
       f(testServer)
     } finally {
-      testServer.bye()
+      if (testServer != null)
+        testServer.bye()
     }
   }
 
