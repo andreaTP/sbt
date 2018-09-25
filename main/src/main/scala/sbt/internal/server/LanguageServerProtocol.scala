@@ -80,6 +80,9 @@ private[sbt] object LanguageServerProtocol {
               import sbt.protocol.codec.JsonProtocol._
               val param = Converter.fromJson[Q](json(r)).get
               onSettingQuery(Option(r.id), param)
+            case r: JsonRpcRequestMessage if r.method == "sbt/cancelRequest" =>
+              import sun.misc.Signal
+              Signal.raise(new Signal("INT"))
           }
         }, {
           case n: JsonRpcNotificationMessage if n.method == "textDocument/didSave" =>
