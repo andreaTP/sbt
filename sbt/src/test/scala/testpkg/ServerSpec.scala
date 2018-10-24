@@ -220,7 +220,7 @@ case class TestServer(baseDirectory: File)(implicit ec: ExecutionContext) {
         waitForPortfile(n - 1)
       }
     }
-  waitForPortfile(90)
+  waitForPortfile(360)
 
   // make connection to the socket described in the portfile
   val (sk, tkn) = ClientSocket.socket(portfile)
