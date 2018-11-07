@@ -2492,8 +2492,28 @@ object Classpaths {
       val s = streams.value
       val skp = (skip in publish).value
       val ref = thisProjectRef.value
-      if (skp) Def.task { s.log.debug(s"Skipping publish* for ${ref.project}") } else
+      if (skp) Def.task { s.log.debug(s"Skipping publish* for ${ref.project}") } else {
+
+        if (useCoursier.value) {
+          val cm = classifiersModule.value
+          _root_.coursier.IvyXml.writeFiles(
+            _root_.coursier.FromSbt
+              .project(
+                cm.id,
+                cm.dependencies,
+                cm.configurations
+                  .map(cfg => cfg.name -> cfg.extendsConfigs.map(_.name))
+                  .toMap,
+                scalaVersion.value,
+                scalaBinaryVersion.value
+              ),
+            ivySbt.value,
+            s.log
+          )
+        }
+
         Def.task { IvyActions.publish(ivyModule.value, config.value, s.log) }
+      }
     } tag (Tags.Publish, Tags.Network)
 
   val moduleIdJsonKeyFormat: sjsonnew.JsonKeyFormat[ModuleID] =
