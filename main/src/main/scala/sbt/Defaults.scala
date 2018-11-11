@@ -2495,14 +2495,57 @@ object Classpaths {
       if (skp) Def.task { s.log.debug(s"Skipping publish* for ${ref.project}") } else {
 
         if (useCoursier.value) {
-          val cm = classifiersModule.value
+          val cm0 = (updateClassifiers / classifiersModule).value
+
+          val cm = cm0.withDependencies(
+            cm0.dependencies.map(
+              _
+                .withExtraAttributes(Map()) // verify
+                .withConfigurations{
+                  val confs = ivyConfigurations.value
+                  if (confs.isEmpty) Some("default(compile)")
+                  else Some(confs.map(_.name).mkString(";"))
+                  //cm0.configurations.map( c => {
+                  // c.name
+                  //})
+                }
+            )
+          )
+
+          /*.withConfigurations(
+            cm0.configurations.map( c => {
+              import _root_.coursier.ivy.IvyXml.{ mappings => ivyXmlMappings }
+              val allMappings = ivyXmlMappings(mapping)
+            })
+          )*/
+
+          //val dependencies = cm.dependencies.map( dep => {
+          //  dep.withExtraAttributes(
+          //    Map()
+              // _root_.coursier.FromSbt.attributes(dep.extraAttributes)
+          //  )
+          //})
+
           _root_.coursier.IvyXml.writeFiles(
             _root_.coursier.FromSbt
               .project(
                 cm.id,
                 cm.dependencies,
                 cm.configurations
-                  .map(cfg => cfg.name -> cfg.extendsConfigs.map(_.name))
+                  .map(cfg => {
+                    // import _root_.coursier.ivy.IvyXml.{ mappings => ivyXmlMappings }
+                    //val allMappings = ivyXmlMappings(cfg.name)
+
+                    //allMappings.map{
+                    //  case (from, to) => s"${cfg.name}->$to" -> cfg.extendsConfigs.map(_.name)
+                    //}
+                    //cfg.name -> cfg.extendsConfigs.map{ c =>
+                    //  ivyXmlMappings(c.name).map{
+                    //    case (from, _) => from // s"FROM: $from | TO: $to"
+                    //  }
+                    //}.flatten
+                    cfg.name -> cfg.extendsConfigs.map(_.name)
+                  })
                   .toMap,
                 scalaVersion.value,
                 scalaBinaryVersion.value

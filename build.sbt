@@ -36,9 +36,9 @@ def buildLevelSettings: Seq[Setting[_]] =
       homepage := Some(url("https://github.com/sbt/sbt")),
       scmInfo := Some(ScmInfo(url("https://github.com/sbt/sbt"), "git@github.com:sbt/sbt.git")),
       resolvers += Resolver.mavenLocal,
-      scalafmtOnCompile := true,
-      scalafmtOnCompile in Sbt := false,
-      scalafmtVersion := "1.4.0",
+      // scalafmtOnCompile := true,
+      // scalafmtOnCompile in Sbt := false,
+      // scalafmtVersion := "1.4.0",
     ))
 
 def commonSettings: Seq[Setting[_]] = Def.settings(
